@@ -326,7 +326,7 @@ Socket connection failed: timed out
 Cannot connect to local patch server ... Exiting
 ```
 
-## ICSPatch with a PLC
+## ICSPatch with a live PLC
 
 First, cross-compile the local patch server and the LKM patcher for the target PLC platform. In the repository, we provide and test for:
 - BeagleBone Black (Linux-4.19.82-ti-rt-r31)
