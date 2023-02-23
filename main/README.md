@@ -20,6 +20,7 @@ This repository contains the source code of ICSPatch, the local patch server, th
 - Install docker for the test environment by following the instructions on: https://docs.docker.com/engine/install/ubuntu/
 - Run the following commands to build and run the docker container
     ```
+    cd ICSPatch/main
     sudo docker build --pull --rm -f "Dockerfile" -t icspatch:latest "."
     sudo docker images // List the images
     sudo docker run -it icspatch:latest
