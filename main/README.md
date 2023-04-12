@@ -26,6 +26,121 @@ This repository contains the source code of ICSPatch, the local patch server, th
     sudo docker run -it icspatch:latest
     ```
 
+## Vulnerability Localization and Patch Generation
+The vulnerability localization and patch generation algorithm for ICSPatch with references to specific files in the code, function names and line numbers.
+
+```
+// Hexdumps are extracted at:
+// simulation.py: get_plc_snapshot_update() [567 - 669]
+// codesys.py: get_memory_snapshot() [116 - 134]
+// If LKM patcher enabled, socketconnector.py: get_memory_page() [136 - 156]
+// If JTAG enabled, jtag.py: get_memory_page() [129 - 134]
+Input: hexdumps
+
+
+// Initialize simulation, get simulation state and instruction program counter
+// simulation.py: initialize_simulation_state() [671 - 724]
+1: sim,state, pc ← INIT_SIM(hexdumps)
+
+// simulation.py: setup_simulation() [831 - 832]
+2: end ← CALC_END_ADDR(start,state)
+
+// Enable vulnerability detection rules in simulation
+// simulation.py: enable_function_start_tracking() [916 - 918]
+// simulation.py: enable_safe_write_tracking() [988 - 990]
+// simulation.py: enable_safe_read_tracking() [1009 - 1011]
+// simulation.py: enable_block_stack_tracking() [1046 - 1049]
+// simulation.py: enable_store_load_tracking() [1116 - 1120]
+// simulation.py: enable_jump_table_address_detection() [1368 - 1370]
+// simulation.py: enable_custom_memory_rule() [1255 - 1262]
+3: sim.ENABLE_DETECTION_RULES()
+
+// simulation.py: initialize_per_simulation_states() [439]
+4: ddg ← INIT_DDG()
+
+// simulation.py: perform_simulation() [865 - 901]
+5: while pc ̸= end do
+
+// Add instruction node for current instruction, containing its operands
+// graph.py: add_store_node() [108]
+// graph.py: add_load_node() [82]
+// graph.py: add_transition_node() [56]
+6: ddg.ADD_INSTR_NODE(pc,state.pc.oprnds)
+
+// simulation.py: check_memory_violation() [1300 - 1302]
+7: if state.op = ‘mem_write’ then
+
+// If sim writes to memory, add mem node and connect it to the instr node
+// graph.py: add_store_node() [107]
+8: ddg.ADD_MEM_NODE(state.mem_write_addr)
+
+// graph.py: add_store_node() [109]
+9: ddg.ADD_EDGE(pc,state.mem_write_addr, ‘stores’)
+
+// simulation.py: check_memory_violation() [1303 - 1305]
+10: else if state.op = ‘mem_read’ then
+
+// If sim reads from memory, add mem node and connect it to instr node
+// graph.py: add_load_node() [83]
+11: ddg.ADD_MEM_NODE(state.mem_read_addr)
+
+// graph.py: add_load_node() [84]
+12: ddg.ADD_EDGE(state.mem_read_addr, pc, ‘loads’)
+
+// simulation.py: enable_store_load_tracking() [1120]
+13: else if state.op = ‘reg_write’ then
+
+// If write to reg, connect instr node to previous reg state (transition node)
+// graph.py: add_transition_node() [57]
+14: ddg.ADD_EDGE(PRV_REG_STATE(state.pc.oprnd2), pc, ‘next’)
+15: end if
+
+// Detect vulnerability using memory violation rules
+// simulation.py: perform_simulation() [890]
+16: if DETECT_VULNERABILITY(state) then
+
+// Locate DDG traversal starting point
+// simulation.py: get_exploit_localization_start_node() [1418 - 1437]
+17: start_addr ← GET_COMPARISON_INSTRUCTION(state.block)
+
+// Get code block bounds for DDG traversal
+// simulation.py: exploit_localization() [1501]
+18: block_start,block_end ← GET_NEAREST_APP_BLOCK_ADR()
+
+// Traverse DDG using DFS algorithm to get patch address
+// simulation.py: exploit_localization() [1503]
+19: sim_p_addr ← DFS(ddg,start_addr,block_start,block_end)
+
+// Check if patch address is valid
+// simulation.py: dfs() [1453 - 1454]
+20: if CHECK_RANGE(sim_p_addr,block_start,block_end)is false then
+21: FAIL()
+22: end if
+
+// For Out-of-Bounds Read/Write and Improper Input Validation, patch.py: OOBWritePatch::initialize() [325 - 343]
+// For OS Command Injection, patch.py: OSCommandInjectionPatch::initialize() [520 - 545]
+23: b_addr ← GET_BASE_ADDR()
+
+// Create patch based on simulation and deployed PLC information
+// For all patches, patch.py BasePatch::create_patch_hook() [179 - 220]
+// For Out-of-Bounds Read/Write and Improper Input Validation, patch.py: OOBWritePatch::create_patch() [355 - 457]
+// For OS Command Injection, patch.py: OSCommandInjectionPatch::create_patch() [568 - 633]
+24: patch,hook,liv_p_addr ← BUILD_PATCH(state,sim_p_addr,b_addr)
+
+// Deploy patch by sending it to the local patch server on the PLC
+// For all patches, patch.py BasePatch::write_patch() [222 - 257]
+// For all patches, patch.py BasePatch::install_patch() [259 - 280]
+25: DEPLOY_PATCH(patch,hook,liv_p_addr)
+
+26: EXIT()
+27: end if
+
+// simulation.py: perform_simulation() [869]
+28: state, pc ← sim.SIM_STEP()
+29: end while
+```
+
+
 ## ICSPatch for Evaluation
 
 Running the command `sudo docker run -it icspatch:latest` runs the docker container and executes ICSPatch, displaying the following prompt:
@@ -346,6 +461,22 @@ The majority of the steps remain the same as in evaluation mode except for:
     ```
     [*] Saved patch information detected. Use it? (Y/N): N
     ```
+
+## Extending ICSPatch
+
+### New Vulnerabilities in Codesys
+
+Supporting new vulnerabilities requires the following changes:
+- Vulnerability Detection Rule: New vulnerabilities will require changes to the existing ruleset. The current rulesets are specified in the `oob_write_detection.py`, `oob_read_detection.py`, `os_command_detection.py`, and `improper_input_validation.py` files for out-of-bounds write, out-of-bounds read, os command injection, and improper input validation, respectively. The ruleset is written in a format similar to the Snort. However, some unique keywords that ICSPatch parses might need to be modified and extended in the sile `simulation.py` in function `process_eval_condition()`.
+- Data Dependence Graph (DDG): The DDG might also require modification specifically for transition nodes. ICSPatch recognizes ADD, SUB, and MOV instructions for creating transition nodes. However, due to the optimizations in the shared libraries, other instructions might not be captured by the DDG, requiring support for including it. This can be done in `simulation.py` in function `add_transition_node()` line 1151 - 1158. Changes might also be required in the core DDG graph creation file, `graph.py`.
+- Patch: In `patch.py`, all the patches inherit basic implementation from BasePatch class. Patching a new vulnerability might require creating a new patch in `patch.py` and inheriting basic functionality from the BasePatch class.
+
+### Other Runtimes
+
+For supporting other runtimes, ICSPatch might require the following changes apart from the ones mentioned above:
+- Control Application Rehosting: ICSPatch supports Codesys and utilizes `angr` to rehost and simulate the execution of control applications. The rehosting and control application requires modifications to support runtime from other vendors.
+- Patch and Deployment: The patch deployment process and the patch structure will differ, considering the compiled control application binaries changes.
+
 
 ## Contact us
 For more information or help with the setup, please contact Prashant Rajput at prashanthrajput@nyu.edu

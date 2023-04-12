@@ -3,5 +3,8 @@ ICSPatch is a hotpatching tool for control application binaries on Codesys runti
 
 For evaluating ICSPatch, please follow the instructions in our [Guide](main/README.md).
 
+## Cite us
+Rajput, Prashant Hari Narayan, Constantine Doumanidis, and Michail Maniatakos. "ICSPatch: Automated Vulnerability Localization and Non-Intrusive Hotpatching in Industrial Control Systems using Data Dependence Graphs." USENIX Security Symposium. 2023.
+
 ## Contact us
 For more information or help with the setup, please contact Prashant Rajput at prashanthrajput@nyu.edu
