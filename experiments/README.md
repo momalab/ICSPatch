@@ -16,6 +16,8 @@ To perform this experiment, open the `Stop Runtime.project` file in Codesys IDE 
 
 The breakpoint is triggered in the first execution of the scan cycle before the value at `0xb62beb82` can be overwritten by the vulnerability in the control application. Upon resuming execution, the breakpoint will trigger again. This is because the control application overwrites the value at `0xb62beb82`, which is being verified by the runtime. As a result, the runtime keeps skipping the execution phase of the scan cycle.
 
+https://user-images.githubusercontent.com/23400744/231361063-6e2f5479-5e56-4968-b0f2-badaae192e51.mp4
+
 ## Execution Timings and Overheads Experiment
 For performing the execution timings and overheads experiments as shown in Table 3 \[1\], utilize the control application dataset present in the `iec_projects`. Before beginning, ensure that the local patch server (`local_patch_server/Wago/wago_local_patch_server`) and the LKM patcher (`lkm_patcher/Wago/wago_patcher.ko`) are both running on the experimental PLC.
 
@@ -51,6 +53,8 @@ To perform the experiment with a single PLC:
 ![](images/hil_in_enabled.png?raw=true)
 7. Since the control application is patched, the physical process should work correctly without crashing.
 
+https://user-images.githubusercontent.com/23400744/231360925-0bce1b58-7bc1-4fec-9bf5-bd7c2fb3faf1.mp4
+
 ## CPU Utilization Experiment
 
 The directory `cpu_utilization` contains two scripts for calculating the CPU utilization.
@@ -58,6 +62,14 @@ The directory `cpu_utilization` contains two scripts for calculating the CPU uti
 - `monitor_postprocessor.py` is the Python implementation for collecting CPU utilization statistics.
 
 To perform the ICSPatch overhead experiments shown in Figures 9 and 10 in \[1\], please run the `codesys_monitor_top_v4_sh.sh` bash script on Wago PFC 100 and 200.
+
+## Out-of-Bounds Read
+
+https://user-images.githubusercontent.com/23400744/231361235-a33e4b13-d3ca-4626-a8ad-fb942088d503.mp4
+
+## OS Command Injection
+
+https://user-images.githubusercontent.com/23400744/231361344-5ea88692-cb6c-42f1-8687-d7eef0d0941f.mp4
 
 ## References
 \[1\] Rajput, Prashant Hari Narayan, Constantine Doumanidis, and Michail Maniatakos. "ICSPatch: Automated Vulnerability Localization and Non-Intrusive Hotpatching in Industrial Control Systems using Data Dependence Graphs." USENIX Security Symposium. 2023.
