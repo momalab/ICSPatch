@@ -2,9 +2,11 @@
 This repository contains the source code for ICSPatch, the local patch server, the LKM patcher, and all the Codesys project files for the Wago PFC 100/200 and BeagleBone Black dataset. ICSPatch patches control application binaries for Codesys runtime and require a physical PLC for a complete end-to-end setup. For easing evaluation, the repository loads a memory snapshot of the vulnerable control application and can verify the generated patch by injecting it in the angr simulation instance. Fully reproducing the results requires a PLC supporting Codesys runtime on a Linux OS. The current version of ICSPatch was tested on Wago PFC 100/200 for Linux-5.10.21 and BeagleBone Black for Linux-4.19.82-ti-rt-r31. Cross-compile the local patch server and the lkm patcher for the target architecture and kernel version. However, evaluation of ICSPatch via injecting the patch in the angr simulation instance can be performed on MacOS/Windows/Linux platform as we package ICSPatch in a docker container.
 
 This repository contains the source code of ICSPatch, the local patch server, the LKM patcher, and all the Codesys project files of the dataset for both the BeagleBone Black and Wago PLCs. The file structure of the repository is as follows:
-- iec_projects: Contains the Codesys project files for all the vulnerable control applications in the dataset.
-    - BBB: Contains the BeagleBone Black project files.
-    - Wago: Contains the Wago project files.
+- experiments: All the files required to run the experiments for ICSPatch.
+    - cpu_utilization: The bash and Python script to run the CPU utilization experiments on a PLC.
+    - hil: All the Hardware-in-the-Loop files including the MSF desalination plant Simulink model and the Codesys project files for the PLC.
+    - iec_projects: Contains the Codesys project files for all the vulnerable control applications in the dataset for BeagleBone Black and Wago.
+    -motivation_example: Contains the Codesys project file for the motivation example that involves disabling the execution phase of the scan cycle in the runtime from the control application.
 - lkm_patcher: The LKM patcher source code deployed on the target PLC.
     - BBB: Contains the BeagleBone Black LKM patcher source code.
     - Wago: Contains the Wago LKM patcher source code.

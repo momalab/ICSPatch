@@ -47,7 +47,8 @@ To perform the experiment with a single PLC:
 3. Load the exploit input in the control application and collect memory snapshots.
 4. Remove the exploit input, apply legitimate input, restart the execution of the control application, and restart the Simulink model.
 5. Continue following the instructions mentioned above and patch the control application.
-6. Once the patching is complete, overwrite the `WD` or `TB0` size values in the Simulink model to simulate the data injection attack from an adversary.
+6. Once the patching is complete, enable `ifEnabled` variable for either `WD` or `TB0` in `wdSizeFxn` or `tbSizeFxn` function block in the Simulink model, triggering the data injection attack at the 100th simulation cycle, as shown in Figure 12 of ICSPatch \[1\].
+![](images/hil_in_enabled.png?raw=true)
 7. Since the control application is patched, the physical process should work correctly without crashing.
 
 ## CPU Utilization Experiment
