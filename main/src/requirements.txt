@@ -10,3 +10,4 @@ pwn==1.0
 pwntools==4.8.0
 scp==0.14.4
 protobuf==3.20.*
+pyelftools==0.28

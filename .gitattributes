@@ -1,2 +1,0 @@
-main/src/bin/bbb/vmlinux-3.14.79-ti-rt-r92.2 filter=lfs diff=lfs merge=lfs -text
-main/src/bin/bbb/vmlinux-4.19.82-ti-rt-r31 filter=lfs diff=lfs merge=lfs -text
